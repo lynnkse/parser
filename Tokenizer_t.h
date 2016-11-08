@@ -9,7 +9,7 @@ using namespace std;
 class Tokenizer_t
 {
 	public:
-		Tokenizer_t(): m_delimiters(" 	"), m_tokensDel("=+()"){};
+		Tokenizer_t(): m_delimiters(" 	"), m_tokensDel("()[]{};<>=+-*&"){};
 		~Tokenizer_t(){};
 		vector<string> GetStringTokens(const string& _str);	//should I return ref to local variable here??
 
@@ -17,8 +17,8 @@ class Tokenizer_t
 		void operator=(const Tokenizer_t& _tok);
 		Tokenizer_t(const Tokenizer_t& _toks);	
 		void SkipLeading();
-		bool IsDelimiter(char c);
-		bool IsToken(char c);   
+		bool IsDelimiter(char c) const;
+		bool IsToken(char c) const;   
 		string NextToken();                        
     	string m_buffer; 
 		vector<string> m_tokens;                                                                 
@@ -28,3 +28,5 @@ class Tokenizer_t
 };
 
 #endif
+
+

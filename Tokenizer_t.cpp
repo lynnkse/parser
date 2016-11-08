@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <iterator>
 #include <iostream>
+#include "Parser_t.h" //for testing only 
 
 using namespace std;
 
@@ -15,12 +16,12 @@ void Tokenizer_t::SkipLeading()
 	}
 }
 
-bool Tokenizer_t::IsDelimiter(char _c)
+bool Tokenizer_t::IsDelimiter(char _c) const
 {
 	return (m_delimiters.find(_c) != string::npos);
 }
 
-bool Tokenizer_t::IsToken(char _c)
+bool Tokenizer_t::IsToken(char _c) const
 {
 	return (m_tokensDel.find(_c) != string::npos);
 }
@@ -54,6 +55,7 @@ string Tokenizer_t::NextToken()
 vector<string> Tokenizer_t::GetStringTokens(const string& _str)
 {
 	string token;
+	m_tokens.clear();
 	m_buffer = _str;
 	m_currPos = m_buffer.begin();	
 	while((token = NextToken()) != "")
@@ -72,15 +74,20 @@ struct Printv
 	};
 };
 
+
 int main()
 {
-	string s("int a = ()a+b)");
 	Tokenizer_t t;
+	Parser_t p("file.txt");
 	
-	vector<string> v = t.GetStringTokens(s);
-
-	for_each(v.begin(), v.end(), Printv());
+	string s;
 	
+	while(p.HasLines())
+	{
+		s = p.GetNextLine();
+		vector<string> v = t.GetStringTokens(s);
+		for_each(v.begin(), v.end(), Printv());
+	}
 	return 0;
 }
 
