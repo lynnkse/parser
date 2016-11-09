@@ -5,7 +5,7 @@
 
 using namespace std;
 
-Analyzer_t::Analyzer_t(): m_prevToken(""), m_befLastToken(""), m_otherTokens(";<>=+-*&"), m_parenesisCount(0), m_bracketsCount(0), m_curlyBrace(0), m_errOpeningPar(0), m_errOpeningBrack(0), m_errOpeningCurl(0) 
+Analyzer_t::Analyzer_t(): m_prevToken(""), m_befLastToken(""), m_otherTokens(";<>&"), m_parenesisCount(0), m_bracketsCount(0), m_curlyBrace(0), m_errOpeningPar(0), m_errOpeningBrack(0), m_errOpeningCurl(0) 
 {
 	EnterPredefinedTyped();
 	EnterOperators();
@@ -84,6 +84,74 @@ void Analyzer_t::EnterKeywords()
 	m_keywords.insert(op11);
 }
 
+bool Analyzer_t::BracesCheck(vector<string>::const_iterator& it, int _lineNum)
+{
+	if((*it).compare("(") == 0) m_parenesisCount = (m_parenesisCount >= 0 ? ++m_parenesisCount : 1);
+	else if((*it).compare(")") == 0) {--m_parenesisCount; if(m_parenesisCount < 0) m_errOpeningPar = 1;}
+	else if((*it).compare("[") == 0) m_bracketsCount = (m_bracketsCount >= 0 ? ++m_bracketsCount : 1);
+	else if((*it).compare("]") == 0) {--m_bracketsCount; if(m_bracketsCount < 0) m_errOpeningBrack = 1;}
+	else if((*it).compare("{") == 0) m_curlyBrace = (m_curlyBrace >= 0 ? ++m_curlyBrace : 1);
+	else if((*it).compare("}") == 0) {--m_curlyBrace; if(m_curlyBrace < 0) m_errOpeningCurl = 1;}
+}
+
+bool Analyzer_t::IfElseCheck(vector<string>::const_iterator& it, int _lineNum)
+{
+	if((*it).compare("if") == 0) m_if = 1;
+	else if((*it).compare("else") == 0 && !m_if) PrintError("else without prior if", _lineNum);
+	else if((*it).compare("else") == 0) m_if = 0;
+	else return false;
+	
+	return true;
+}
+
+bool Analyzer_t::IlligalOpCheck(vector<string>::const_iterator& it, int _lineNum)
+{
+	if(!(*it).compare("+") && !(m_prevToken).compare("+") && !(m_befLastToken).compare("+")) PrintError("illigal operator +++", _lineNum);
+	else if(!(*it).compare("-") && !(m_prevToken).compare("-") && !(m_befLastToken).compare("-")) PrintError("illigal operator ---", _lineNum);
+	else return false;
+
+	return true;
+}
+
+bool Analyzer_t::TypeCheck(vector<string>::const_iterator& it, int _lineNum)
+{
+	if(m_types.find(*it) != m_types.end() && m_types.find(m_prevToken) != m_types.end()) PrintError("multiple predefined typed", _lineNum);
+	else return false;
+
+	return true;
+}
+
+bool Analyzer_t::UserDeclaredCheck(vector<string>::const_iterator& it, int _lineNum)
+{
+	if(m_userDeclared.find(*it) != m_userDeclared.end()) cout << "Error on line " << _lineNum << ": " << *it << " is already declared" << endl;
+	else return false;
+
+	return true;
+}
+
+bool Analyzer_t::KeywordsCheck(vector<string>::const_iterator& it, int _lineNum)
+{
+	if(m_types.find(m_prevToken) != m_types.end() && m_keywords.find(*it) == m_keywords.end() && m_operators.find(*it) == m_operators.end() && m_otherTokens.find(*it) == string::npos) m_userDeclared.insert(*it);
+	else if(m_keywords.find(*it) != m_keywords.end() && m_types.find(m_prevToken) != m_types.end()) PrintError("illigal declaration", _lineNum);
+	else return false;
+	
+	return true;
+}
+
+bool Analyzer_t::UndeclaredCheck(vector<string>::const_iterator& it, int _lineNum)
+{
+	if(m_keywords.find(*it)     == m_keywords.end()     && 
+	   m_types.find(*it)        == m_types.end()        && 
+       m_operators.find(*it)    == m_operators.end()    && 
+	   m_userDeclared.find(*it) == m_userDeclared.end() && 
+       !IsNumber(*it)                                   &&
+	   m_otherTokens.find(*it)  == string::npos) 
+	   cout << "Error on line "  << _lineNum << ": "<< *it << " not declared" << endl;
+	else return false;
+	
+	return true;
+}
+
 void Analyzer_t::Analyze(const vector<string>& _words, int _lineNum)
 {
 	static int isFirst = 1;	
@@ -103,22 +171,13 @@ void Analyzer_t::Analyze(const vector<string>& _words, int _lineNum)
 
 	for(; it != _words.end(); ++it)
 	{
-		if((*it).compare("(") == 0) m_parenesisCount = (m_parenesisCount >= 0 ? ++m_parenesisCount : 1);
-		else if((*it).compare(")") == 0) {--m_parenesisCount; if(m_parenesisCount < 0) m_errOpeningPar = 1;}
-		else if((*it).compare("[") == 0) m_bracketsCount = (m_bracketsCount >= 0 ? ++m_bracketsCount : 1);
-		else if((*it).compare("]") == 0) {--m_bracketsCount; if(m_bracketsCount < 0) m_errOpeningBrack = 1;}
-		else if((*it).compare("{") == 0) m_curlyBrace = (m_curlyBrace >= 0 ? ++m_curlyBrace : 1);
-		else if((*it).compare("}") == 0) {--m_curlyBrace; if(m_curlyBrace < 0) m_errOpeningCurl = 1;}
-		else if((*it).compare("if") == 0) m_if = 1;
-		else if((*it).compare("else") == 0 && !m_if) PrintError("else without prior if", _lineNum);
-		else if((*it).compare("else") == 0) m_if = 0;
-		else if(!(*it).compare("+") && !(m_prevToken).compare("+") && !(m_befLastToken).compare("+")) PrintError("illigal operator +++", _lineNum);
-		else if(!(*it).compare("-") && !(m_prevToken).compare("-") && !(m_befLastToken).compare("-")) PrintError("illigal operator ---", _lineNum);			
-		else if(m_types.find(m_prevToken) != m_types.end() && m_types.find(*it) != m_types.end()) PrintError("multiple predefined typed", _lineNum);
-		else if(m_userDeclared.find(*it) != m_userDeclared.end()) cout << "Error on line " << _lineNum << ": " << *it << " is already declared" << endl;
-		else if(m_types.find(m_prevToken) != m_types.end() && m_keywords.find(*it) == m_keywords.end()) m_userDeclared.insert(*it);
-		else if(m_keywords.find(*it) != m_keywords.end() && m_types.find(m_prevToken) != m_types.end()) PrintError("illigal declaration", _lineNum);
-		else if(m_keywords.find(*it) == m_keywords.end() && m_types.find(*it) == m_types.end() && m_operators.find(*it) == m_operators.end() && m_userDeclared.find(*it) == m_userDeclared.end() && !IsNumber(*it) && m_otherTokens.find(*it) == string::npos) cout << "Error on line "  << _lineNum << ": "<< *it << " not declared" << endl;
+		if(BracesCheck(it, _lineNum) ||
+		   IfElseCheck(it, _lineNum) ||
+		   IlligalOpCheck(it, _lineNum) ||
+		   TypeCheck(it, _lineNum) ||
+		   UserDeclaredCheck(it, _lineNum) ||
+		   KeywordsCheck(it, _lineNum) ||
+		   UndeclaredCheck(it, _lineNum));
 
 		m_befLastToken = m_prevToken;
 		m_prevToken = *it;
