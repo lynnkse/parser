@@ -4,7 +4,7 @@
 class FileParser_t
 {
 	public:
-		FileParser_t();
+		FileParser_t(const string& _file);
 		~FileParser_t();
 		void RunParser();
 	private:

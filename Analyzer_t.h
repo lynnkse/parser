@@ -11,7 +11,7 @@ using namespace std;
 class Analyzer_t
 {
 	public:
-		enum TokenType {TYPE, KEYWORD, OPERATOR, USER_DECLARED};
+		//enum TokenType {TYPE, KEYWORD, OPERATOR, USER_DECLARED};
 		
 		Analyzer_t();
 		~Analyzer_t();
