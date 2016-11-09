@@ -26,6 +26,11 @@ bool Tokenizer_t::IsToken(char _c) const
 	return (m_tokensDel.find(_c) != string::npos);
 }
 
+bool Tokenizer_t::IsSpecial(char _c) const
+{
+	return (m_specialChars.find(_c) != string::npos);
+}
+
 string Tokenizer_t::NextToken()
 {
 	if(!m_buffer.size())
@@ -45,14 +50,18 @@ string Tokenizer_t::NextToken()
 
 	while(m_currPos!=m_buffer.end() && !IsDelimiter(*m_currPos) && !IsToken(*m_currPos))
 	{
-		token += *m_currPos;
+		if(!IsSpecial(*m_currPos))	
+		{		
+			token += *m_currPos;
+		}
+
 		++m_currPos;
 	}
 
 	return token;
 }
 
-vector<string> Tokenizer_t::GetStringTokens(const string& _str)
+const vector<string>& Tokenizer_t::GetStringTokens(const string& _str)
 {
 	string token;
 	m_tokens.clear();
@@ -75,21 +84,6 @@ struct Printv
 };
 
 
-int main()
-{
-	Tokenizer_t t;
-	Parser_t p("file.txt");
-	
-	string s;
-	
-	while(p.HasLines())
-	{
-		s = p.GetNextLine();
-		vector<string> v = t.GetStringTokens(s);
-		for_each(v.begin(), v.end(), Printv());
-	}
-	return 0;
-}
 
 
 

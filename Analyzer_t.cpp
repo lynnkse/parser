@@ -5,12 +5,14 @@
 
 using namespace std;
 
-Analyzer_t::Analyzer_t(): m_prevToken("")
+Analyzer_t::Analyzer_t(): m_prevToken(""), m_befLastToken(""), m_otherTokens(";<>=+-*&"), m_parenesisCount(0), m_bracketsCount(0), m_curlyBrace(0), m_errOpeningPar(0), m_errOpeningBrack(0), m_errOpeningCurl(0) 
 {
 	EnterPredefinedTyped();
 	EnterOperators();
 	EnterKeywords();
 }
+
+Analyzer_t::~Analyzer_t(){}
 
 void Analyzer_t::EnterPredefinedTyped()
 {
@@ -82,13 +84,12 @@ void Analyzer_t::EnterKeywords()
 	m_keywords.insert(op11);
 }
 
-int Analyzer_t::Analyze(vector<string> _words, int _lineNum)
+void Analyzer_t::Analyze(const vector<string>& _words, int _lineNum)
 {
 	static int isFirst = 1;	
-	int m_parenesisCount;
-	int m_bracketsCount;
-	int m_curlyBrace;	
-	int errCount = 0;
+
+	if(_words.empty()) return;
+
 	vector<string>::const_iterator it = _words.begin();
 
 	if(isFirst)
@@ -102,22 +103,25 @@ int Analyzer_t::Analyze(vector<string> _words, int _lineNum)
 
 	for(; it != _words.end(); ++it)
 	{
-				if((*it).compare("(") == 0) ++m_parenesisCount;
-				else if((*it).compare(")") == 0) m_parenesisCount = (m_parenesisCount >= 0 ? ++m_parenesisCount : 1);
-				else if((*it).compare("[") == 0) ++m_bracketsCount;
-				else if((*it).compare("]") == 0) m_bracketsCount = (m_bracketsCount >= 0 ? ++m_bracketsCount : 1);
-				else if((*it).compare("{") == 0) ++m_curlyBrace;
-				else if((*it).compare("}") == 0) m_curlyBrace = (m_curlyBrace >= 0 ? ++m_curlyBrace : 1);
-				else if((*it).compare("if") == 0) m_if = 1;
-				else if((*it).compare("else") == 0 && !m_if) PrintError("else without prior if", _lineNum);
-				// TODO else if   ILLIGAL OPERATORS
-				
-				if(m_types.find(m_prevToken) != set::end && m_types.find(*it) != set::end) PrintError("multiple predefined typed", _lineNum);
-				else if(m_userDeclared.find(*it) != set::end) cout << "Error on line " << _lineNum << ": " << *it << " is already declared" << endl;
-				else if(m_types.find(m_prevToken) != set::end && m_keywords.find(*it) == set::end) m_userDeclared.insert(*it);
-			
-				m_prevToken = *it;
-				
+		if((*it).compare("(") == 0) m_parenesisCount = (m_parenesisCount >= 0 ? ++m_parenesisCount : 1);
+		else if((*it).compare(")") == 0) {--m_parenesisCount; if(m_parenesisCount < 0) m_errOpeningPar = 1;}
+		else if((*it).compare("[") == 0) m_bracketsCount = (m_bracketsCount >= 0 ? ++m_bracketsCount : 1);
+		else if((*it).compare("]") == 0) {--m_bracketsCount; if(m_bracketsCount < 0) m_errOpeningBrack = 1;}
+		else if((*it).compare("{") == 0) m_curlyBrace = (m_curlyBrace >= 0 ? ++m_curlyBrace : 1);
+		else if((*it).compare("}") == 0) {--m_curlyBrace; if(m_curlyBrace < 0) m_errOpeningCurl = 1;}
+		else if((*it).compare("if") == 0) m_if = 1;
+		else if((*it).compare("else") == 0 && !m_if) PrintError("else without prior if", _lineNum);
+		else if((*it).compare("else") == 0) m_if = 0;
+		else if(!(*it).compare("+") && !(m_prevToken).compare("+") && !(m_befLastToken).compare("+")) PrintError("illigal operator +++", _lineNum);
+		else if(!(*it).compare("-") && !(m_prevToken).compare("-") && !(m_befLastToken).compare("-")) PrintError("illigal operator ---", _lineNum);			
+		else if(m_types.find(m_prevToken) != m_types.end() && m_types.find(*it) != m_types.end()) PrintError("multiple predefined typed", _lineNum);
+		else if(m_userDeclared.find(*it) != m_userDeclared.end()) cout << "Error on line " << _lineNum << ": " << *it << " is already declared" << endl;
+		else if(m_types.find(m_prevToken) != m_types.end() && m_keywords.find(*it) == m_keywords.end()) m_userDeclared.insert(*it);
+		else if(m_keywords.find(*it) != m_keywords.end() && m_types.find(m_prevToken) != m_types.end()) PrintError("illigal declaration", _lineNum);
+		else if(m_keywords.find(*it) == m_keywords.end() && m_types.find(*it) == m_types.end() && m_operators.find(*it) == m_operators.end() && m_userDeclared.find(*it) == m_userDeclared.end() && !IsNumber(*it) && m_otherTokens.find(*it) == string::npos) cout << "Error on line "  << _lineNum << ": "<< *it << " not declared" << endl;
+
+		m_befLastToken = m_prevToken;
+		m_prevToken = *it;
 	}
 }
 
@@ -126,10 +130,35 @@ void Analyzer_t::PrintError(const string& _msg, int _lineNum) const
 	cout << "Error on line " << _lineNum << ": " << _msg << endl;
 }
 
+bool Analyzer_t::IsNumber(const string& _s)
+{
+    string::const_iterator it = _s.begin();
+    while (it != _s.end() && std::isdigit(*it)) 
+	{
+		++it;
+	}
+    return !_s.empty() && it == _s.end();
+}
 
-//----------------------------------------//
-int main() { return 0; }
+void Analyzer_t::ZeroAll()
+{
+	m_parenesisCount = 0;
+	m_bracketsCount = 0;
+	m_curlyBrace = 0;	
+	m_userDeclared.clear();	
+}
 
+void Analyzer_t::AnalyzeFinal()
+{
+	if(m_bracketsCount > 0) cout << "Error: "<< m_bracketsCount <<" unclosed brackets" << endl;
+	if(m_errOpeningBrack) cout << "Error: closing brackets without openning one" << endl;
+	if(m_curlyBrace > 0) cout << "Error: "<< m_curlyBrace <<" unclosed curlybrace" << endl;
+	if(m_errOpeningCurl) cout << "Error: closing curlybrace without openning one" << endl;
+	if(m_parenesisCount > 0) cout << "Error: " << m_parenesisCount <<" unclosed parentesis" << endl;
+	if(m_errOpeningPar) cout << "Error: closing parentesis without openning one" << endl;
+	
+	ZeroAll();
+}
 
 
 

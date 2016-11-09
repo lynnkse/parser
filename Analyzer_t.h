@@ -10,12 +10,11 @@ using namespace std;
 
 class Analyzer_t
 {
-	public:
-		//enum TokenType {TYPE, KEYWORD, OPERATOR, USER_DECLARED};
-		
+	public:		
 		Analyzer_t();
-		~Analyzer_t();
-		int Analyze(vector<string> _words, int _lineNum);	
+		virtual ~Analyzer_t();
+		void Analyze(const vector<string>& _words, int _lineNum);
+		void AnalyzeFinal();	
 
 	private:
 		void operator=(const Analyzer_t& _anz);
@@ -24,21 +23,24 @@ class Analyzer_t
 		void EnterOperators();
 		void EnterKeywords();
 		void PrintError(const string& _msg, int _lineNum) const;
-		void ParenesisCountUp();
-		void ParenesisCountDown();
-		void BracketsCountUp();
-		void BracketsCountDown();
-		void CurlybraceCountUp();
-		void CurlybraceCountDown();
+		bool IsNumber(const string& _s);
+		void ZeroAll();
 
 		set<string> m_types;
 		set<string> m_operators;
-		set<string> m_tokens;
 		set<string> m_userDeclared;
 		set<string> m_keywords;
+		const string m_otherTokens; 
 		int m_if;
 		string m_prevToken;
-		TokenType m_lastToken;
+		string m_lastToken;
+		string m_befLastToken;
+		int m_parenesisCount;
+		int m_bracketsCount;
+		int m_curlyBrace;
+		int m_errOpeningPar;
+		int m_errOpeningBrack;
+		int m_errOpeningCurl;
 };
 
 #endif
