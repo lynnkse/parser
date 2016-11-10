@@ -15,11 +15,13 @@ class Parser_t
 		string GetNextLine();
 		inline int GetLineNum() const;
 		inline bool HasLines() const;
+		inline const string& GetFileName() const;
 	private:
 		void operator=(const Parser_t& _pars);
 		Parser_t(const Parser_t& _pars);
 		int m_currLineNum;
 		ifstream* m_fs;
+		string m_fileName;
 };
 
 inline int Parser_t::GetLineNum() const
@@ -30,6 +32,11 @@ inline int Parser_t::GetLineNum() const
 inline bool Parser_t::HasLines() const
 {
 	return m_fs ? !m_fs->eof() : false;
+}
+
+inline const string& Parser_t::GetFileName() const
+{
+	return m_fileName;
 }
 
 #endif

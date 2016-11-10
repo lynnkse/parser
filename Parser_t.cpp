@@ -30,6 +30,7 @@ void Parser_t::ProcessFile(const string& _fileName)
 	
 	m_fs = new ifstream(_fileName.c_str());
 	m_currLineNum = 0;
+	m_fileName = _fileName;
 }
 
 

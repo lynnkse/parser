@@ -100,7 +100,7 @@ bool Analyzer_t::BracesCheck(vector<string>::const_iterator& it, int _lineNum)
 bool Analyzer_t::IfElseCheck(vector<string>::const_iterator& it, int _lineNum)
 {
 	if((*it).compare("if") == 0) m_if = 1;
-	else if((*it).compare("else") == 0 && !m_if) PrintError("else without prior if", _lineNum);
+	else if((*it).compare("else") == 0 && !m_if) PrintError("else without prior if", _lineNum, m_fileName);
 	else if((*it).compare("else") == 0) m_if = 0;
 	else return false;
 	
@@ -109,8 +109,8 @@ bool Analyzer_t::IfElseCheck(vector<string>::const_iterator& it, int _lineNum)
 
 bool Analyzer_t::IlligalOpCheck(vector<string>::const_iterator& it, int _lineNum) const
 {
-	if(!(*it).compare("+") && !(m_prevToken).compare("+") && !(m_befLastToken).compare("+")) PrintError("illigal operator +++", _lineNum);
-	else if(!(*it).compare("-") && !(m_prevToken).compare("-") && !(m_befLastToken).compare("-")) PrintError("illigal operator ---", _lineNum);
+	if(!(*it).compare("+") && !(m_prevToken).compare("+") && !(m_befLastToken).compare("+")) PrintError("illigal operator +++", _lineNum, m_fileName);
+	else if(!(*it).compare("-") && !(m_prevToken).compare("-") && !(m_befLastToken).compare("-")) PrintError("illigal operator ---", _lineNum, m_fileName);
 	else return false;
 
 	return true;
@@ -118,7 +118,7 @@ bool Analyzer_t::IlligalOpCheck(vector<string>::const_iterator& it, int _lineNum
 
 bool Analyzer_t::TypeCheck(vector<string>::const_iterator& it, int _lineNum) const
 {
-	if(m_types.find(*it) != m_types.end() && m_types.find(m_prevToken) != m_types.end()) PrintError("multiple predefined typed", _lineNum);
+	if(m_types.find(*it) != m_types.end() && m_types.find(m_prevToken) != m_types.end()) PrintError("multiple predefined types", _lineNum, m_fileName);
 	else return false;
 
 	return true;
@@ -126,7 +126,7 @@ bool Analyzer_t::TypeCheck(vector<string>::const_iterator& it, int _lineNum) con
 
 bool Analyzer_t::UserDeclaredCheck(vector<string>::const_iterator& it, int _lineNum) const
 {
-	if(m_userDeclared.find(*it) != m_userDeclared.end()) cout << "Error on line " << _lineNum << ": " << *it << " is already declared" << endl;
+	if(m_userDeclared.find(*it) != m_userDeclared.end()) cout << "Error in file " << m_fileName << " on line " << _lineNum << ": " << *it << " is already declared" << endl;
 	else return false;
 
 	return true;
@@ -135,7 +135,7 @@ bool Analyzer_t::UserDeclaredCheck(vector<string>::const_iterator& it, int _line
 bool Analyzer_t::KeywordsCheck(vector<string>::const_iterator& it, int _lineNum)
 {
 	if(m_types.find(m_prevToken) != m_types.end() && m_keywords.find(*it) == m_keywords.end() && m_operators.find(*it) == m_operators.end() && m_otherTokens.find(*it) == string::npos) m_userDeclared.insert(*it);
-	else if(m_keywords.find(*it) != m_keywords.end() && m_types.find(m_prevToken) != m_types.end()) PrintError("illigal declaration", _lineNum);
+	else if(m_keywords.find(*it) != m_keywords.end() && m_types.find(m_prevToken) != m_types.end()) PrintError("illigal declaration", _lineNum, m_fileName);
 	else return false;
 	
 	return true;
@@ -149,26 +149,26 @@ bool Analyzer_t::UndeclaredCheck(vector<string>::const_iterator& it, int _lineNu
 	   m_userDeclared.find(*it) == m_userDeclared.end() && 
        !IsNumber(*it)                                   &&
 	   m_otherTokens.find(*it)  == string::npos) 
-	   cout << "Error on line "  << _lineNum << ": "<< *it << " not declared" << endl;
+	   cout << "Error in file " << m_fileName << " on line "  << _lineNum << ": "<< *it << " not declared" << endl;
 	else return false;
 	
 	return true;
 }
 
-void Analyzer_t::Analyze(const vector<string>& _words, int _lineNum)
+void Analyzer_t::Analyze(const vector<string>& _words, int _lineNum, const string& _fileName)
 {
-	static int isFirst = 1;	
+	m_fileName = _fileName;
 
 	if(_words.empty()) return;
 
 	vector<string>::const_iterator it = _words.begin();
 
-	if(isFirst)
+	if(m_isFirst)
 	{
-		isFirst = 0;
+		m_isFirst = 0;
 		if((*it).compare("main") != 0)	
 		{	
-			PrintError("Program should start with main()", _lineNum);
+			PrintError("Program should start with main()", _lineNum, m_fileName);
 		}
 	}
 
@@ -187,9 +187,9 @@ void Analyzer_t::Analyze(const vector<string>& _words, int _lineNum)
 	}
 }
 
-void Analyzer_t::PrintError(const string& _msg, int _lineNum) const
+void Analyzer_t::PrintError(const string& _msg, int _lineNum, const string& _fileName) const
 {
-	cout << "Error on line " << _lineNum << ": " << _msg << endl;
+	cout << "Error in file " << _fileName << " on line " << _lineNum << ": " << _msg << endl;
 }
 
 bool Analyzer_t::IsNumber(const string& _s) const
@@ -208,16 +208,17 @@ void Analyzer_t::ZeroAll()
 	m_bracketsCount = 0;
 	m_curlyBrace = 0;	
 	m_userDeclared.clear();	
+	m_isFirst = 1;
 }
 
 void Analyzer_t::AnalyzeFinal()
 {
-	if(m_bracketsCount > 0) cout << "Error: "<< m_bracketsCount <<" unclosed brackets" << endl;
-	if(m_errOpeningBrack) cout << "Error: closing brackets without openning one" << endl;
-	if(m_curlyBrace > 0) cout << "Error: "<< m_curlyBrace <<" unclosed curlybrace" << endl;
-	if(m_errOpeningCurl) cout << "Error: closing curlybrace without openning one" << endl;
-	if(m_parenesisCount > 0) cout << "Error: " << m_parenesisCount <<" unclosed parentesis" << endl;
-	if(m_errOpeningPar) cout << "Error: closing parentesis without openning one" << endl;
+	if(m_bracketsCount > 0) cout << "Error in file " << m_fileName << ": "<< m_bracketsCount <<" unclosed brackets" << endl;
+	if(m_errOpeningBrack) cout << "Error in file " << m_fileName << ": closing brackets without openning one" << endl;
+	if(m_curlyBrace > 0) cout << "Error in file " << m_fileName << ": "<< m_curlyBrace <<" unclosed curlybrace" << endl;
+	if(m_errOpeningCurl) cout << "Error in file " << m_fileName << ": closing curlybrace without openning one" << endl;
+	if(m_parenesisCount > 0) cout << "Error in file " << m_fileName << ": " << m_parenesisCount <<" unclosed parentesis" << endl;
+	if(m_errOpeningPar) cout << "Error in file " << m_fileName << ": closing parentesis without openning one" << endl;
 	
 	ZeroAll();
 }

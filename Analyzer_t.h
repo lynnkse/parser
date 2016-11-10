@@ -13,7 +13,7 @@ class Analyzer_t
 	public:		
 		Analyzer_t();
 		virtual ~Analyzer_t();
-		void Analyze(const vector<string>& _words, int _lineNum);
+		void Analyze(const vector<string>& _words, int _lineNum, const string& _fileName);
 		void AnalyzeFinal(); //to be called to finalize file analysis - parentesis integrity check & zeroing counters
 
 	private:
@@ -22,7 +22,7 @@ class Analyzer_t
 		void EnterPredefinedTypes();
 		void EnterOperators();
 		void EnterKeywords();
-		void PrintError(const string& _msg, int _lineNum) const;
+		void PrintError(const string& _msg, int _lineNum, const string& _fileName) const;
 		bool IsNumber(const string& _s) const;
 		void ZeroAll();
 		bool BracesCheck(vector<string>::const_iterator& it, int _lineNum);
@@ -39,8 +39,10 @@ class Analyzer_t
 		set<string> m_keywords;
 		const string m_otherTokens; 
 		int m_if;
+		int m_isFirst;
 		string m_prevToken;
 		string m_befLastToken;
+		string m_fileName;
 		int m_parenesisCount;
 		int m_bracketsCount;
 		int m_curlyBrace;
