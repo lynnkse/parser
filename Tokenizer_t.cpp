@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <iterator>
 #include <iostream>
-#include "Parser_t.h" //for testing only 
 
 using namespace std;
 
@@ -75,13 +74,6 @@ const vector<string>& Tokenizer_t::GetStringTokens(const string& _str)
 	return m_tokens;
 }
 
-struct Printv
-{
-	void operator()(const string& s)
-	{
-		cout << s << endl;
-	};
-};
 
 
 

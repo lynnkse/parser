@@ -7,14 +7,14 @@ using namespace std;
 
 Analyzer_t::Analyzer_t(): m_prevToken(""), m_befLastToken(""), m_otherTokens(";<>&"), m_parenesisCount(0), m_bracketsCount(0), m_curlyBrace(0), m_errOpeningPar(0), m_errOpeningBrack(0), m_errOpeningCurl(0) 
 {
-	EnterPredefinedTyped();
+	EnterPredefinedTypes();
 	EnterOperators();
 	EnterKeywords();
 }
 
 Analyzer_t::~Analyzer_t(){}
 
-void Analyzer_t::EnterPredefinedTyped()
+void Analyzer_t::EnterPredefinedTypes()
 {
 	string ch("char");	
 	string sh("short");
@@ -92,6 +92,9 @@ bool Analyzer_t::BracesCheck(vector<string>::const_iterator& it, int _lineNum)
 	else if((*it).compare("]") == 0) {--m_bracketsCount; if(m_bracketsCount < 0) m_errOpeningBrack = 1;}
 	else if((*it).compare("{") == 0) m_curlyBrace = (m_curlyBrace >= 0 ? ++m_curlyBrace : 1);
 	else if((*it).compare("}") == 0) {--m_curlyBrace; if(m_curlyBrace < 0) m_errOpeningCurl = 1;}
+	else return false;
+
+	return true;
 }
 
 bool Analyzer_t::IfElseCheck(vector<string>::const_iterator& it, int _lineNum)
@@ -104,7 +107,7 @@ bool Analyzer_t::IfElseCheck(vector<string>::const_iterator& it, int _lineNum)
 	return true;
 }
 
-bool Analyzer_t::IlligalOpCheck(vector<string>::const_iterator& it, int _lineNum)
+bool Analyzer_t::IlligalOpCheck(vector<string>::const_iterator& it, int _lineNum) const
 {
 	if(!(*it).compare("+") && !(m_prevToken).compare("+") && !(m_befLastToken).compare("+")) PrintError("illigal operator +++", _lineNum);
 	else if(!(*it).compare("-") && !(m_prevToken).compare("-") && !(m_befLastToken).compare("-")) PrintError("illigal operator ---", _lineNum);
@@ -113,7 +116,7 @@ bool Analyzer_t::IlligalOpCheck(vector<string>::const_iterator& it, int _lineNum
 	return true;
 }
 
-bool Analyzer_t::TypeCheck(vector<string>::const_iterator& it, int _lineNum)
+bool Analyzer_t::TypeCheck(vector<string>::const_iterator& it, int _lineNum) const
 {
 	if(m_types.find(*it) != m_types.end() && m_types.find(m_prevToken) != m_types.end()) PrintError("multiple predefined typed", _lineNum);
 	else return false;
@@ -121,7 +124,7 @@ bool Analyzer_t::TypeCheck(vector<string>::const_iterator& it, int _lineNum)
 	return true;
 }
 
-bool Analyzer_t::UserDeclaredCheck(vector<string>::const_iterator& it, int _lineNum)
+bool Analyzer_t::UserDeclaredCheck(vector<string>::const_iterator& it, int _lineNum) const
 {
 	if(m_userDeclared.find(*it) != m_userDeclared.end()) cout << "Error on line " << _lineNum << ": " << *it << " is already declared" << endl;
 	else return false;
@@ -138,7 +141,7 @@ bool Analyzer_t::KeywordsCheck(vector<string>::const_iterator& it, int _lineNum)
 	return true;
 }
 
-bool Analyzer_t::UndeclaredCheck(vector<string>::const_iterator& it, int _lineNum)
+bool Analyzer_t::UndeclaredCheck(vector<string>::const_iterator& it, int _lineNum) const
 {
 	if(m_keywords.find(*it)     == m_keywords.end()     && 
 	   m_types.find(*it)        == m_types.end()        && 
@@ -171,13 +174,13 @@ void Analyzer_t::Analyze(const vector<string>& _words, int _lineNum)
 
 	for(; it != _words.end(); ++it)
 	{
-		if(BracesCheck(it, _lineNum) ||
-		   IfElseCheck(it, _lineNum) ||
-		   IlligalOpCheck(it, _lineNum) ||
-		   TypeCheck(it, _lineNum) ||
-		   UserDeclaredCheck(it, _lineNum) ||
-		   KeywordsCheck(it, _lineNum) ||
-		   UndeclaredCheck(it, _lineNum));
+		   if (BracesCheck(it, _lineNum));
+		   else if(IfElseCheck(it, _lineNum));
+		   else if(IlligalOpCheck(it, _lineNum));
+		   else if(TypeCheck(it, _lineNum));
+		   else if(UserDeclaredCheck(it, _lineNum));
+		   else if(KeywordsCheck(it, _lineNum));
+		   else if(UndeclaredCheck(it, _lineNum));
 
 		m_befLastToken = m_prevToken;
 		m_prevToken = *it;
@@ -189,7 +192,7 @@ void Analyzer_t::PrintError(const string& _msg, int _lineNum) const
 	cout << "Error on line " << _lineNum << ": " << _msg << endl;
 }
 
-bool Analyzer_t::IsNumber(const string& _s)
+bool Analyzer_t::IsNumber(const string& _s) const
 {
     string::const_iterator it = _s.begin();
     while (it != _s.end() && std::isdigit(*it)) 

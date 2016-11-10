@@ -14,24 +14,24 @@ class Analyzer_t
 		Analyzer_t();
 		virtual ~Analyzer_t();
 		void Analyze(const vector<string>& _words, int _lineNum);
-		void AnalyzeFinal();	
+		void AnalyzeFinal(); //to be called to finalize file analysis - parentesis integrity check & zeroing counters
 
 	private:
 		void operator=(const Analyzer_t& _anz);
 		Analyzer_t(const Analyzer_t& _anz);
-		void EnterPredefinedTyped();
+		void EnterPredefinedTypes();
 		void EnterOperators();
 		void EnterKeywords();
 		void PrintError(const string& _msg, int _lineNum) const;
-		bool IsNumber(const string& _s);
+		bool IsNumber(const string& _s) const;
 		void ZeroAll();
 		bool BracesCheck(vector<string>::const_iterator& it, int _lineNum);
 		bool IfElseCheck(vector<string>::const_iterator& it, int _lineNum);
-		bool IlligalOpCheck(vector<string>::const_iterator& it, int _lineNum);
-		bool TypeCheck(vector<string>::const_iterator& it, int _lineNum);
-		bool UserDeclaredCheck(vector<string>::const_iterator& it, int _lineNum);
+		bool IlligalOpCheck(vector<string>::const_iterator& it, int _lineNum) const;
+		bool TypeCheck(vector<string>::const_iterator& it, int _lineNum) const;
+		bool UserDeclaredCheck(vector<string>::const_iterator& it, int _lineNum) const;
 		bool KeywordsCheck(vector<string>::const_iterator& it, int _lineNum);
-		bool UndeclaredCheck(vector<string>::const_iterator& it, int _lineNum);
+		bool UndeclaredCheck(vector<string>::const_iterator& it, int _lineNum) const;
 
 		set<string> m_types;
 		set<string> m_operators;
@@ -40,7 +40,6 @@ class Analyzer_t
 		const string m_otherTokens; 
 		int m_if;
 		string m_prevToken;
-		//string m_lastToken;
 		string m_befLastToken;
 		int m_parenesisCount;
 		int m_bracketsCount;

@@ -27,7 +27,7 @@ void FileParser_t::RunParser(const string& _file) const
 	while(m_parser->HasLines())
 	{
 		string s = m_parser->GetNextLine();
-		vector<string> tokens = m_tokenizer->GetStringTokens(s); //TODO copy here, but this line is nesessary to ensure order in next line, review later 
+		vector<string> tokens = m_tokenizer->GetStringTokens(s);
 		m_analyzer->Analyze(tokens, m_parser->GetLineNum());
 	}
 	m_analyzer->AnalyzeFinal();

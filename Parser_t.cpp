@@ -5,8 +5,6 @@
 #include <vector>
 #include <fstream>
 
-//Parser_t::Parser_t(const string& _fileName): m_currLineNum(0), m_fs(_fileName.c_str()){}
-
 Parser_t::Parser_t():m_currLineNum(0), m_fs(0){}
 
 Parser_t::~Parser_t()
@@ -16,14 +14,14 @@ Parser_t::~Parser_t()
 
 string Parser_t::GetNextLine() 
 {
-	if(!m_fs->eof() && !m_fs->fail() && !m_fs->bad())
-	{	
-		string line;
-		getline(*m_fs, line);
-		++m_currLineNum;	
-		return line;
-	}
-	throw("cannot read from file");
+	if(m_fs->eof()) throw("EOF reached");
+	else if(m_fs->fail()) throw("fail opening file");
+	else if(m_fs->bad()) throw("bad file");
+	
+	string line;
+	getline(*m_fs, line);
+	++m_currLineNum;	
+	return line;
 }
 
 void Parser_t::ProcessFile(const string& _fileName)
@@ -31,19 +29,8 @@ void Parser_t::ProcessFile(const string& _fileName)
 	if(m_fs) delete m_fs;
 	
 	m_fs = new ifstream(_fileName.c_str());
+	m_currLineNum = 0;
 }
-
-/*int main()
-{
-	Parser_t p("file.txt");
-	
-	while(p.HasLines())
-	{
-		cout << p.GetNextLine() << endl;
-	}
-
-	return 0;
-}*/
 
 
 
